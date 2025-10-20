@@ -45,12 +45,16 @@ def cargar_ai_schema():
 def enviar_a_ia(instruccion, contexto=""):
     schema = cargar_ai_schema()
     
-    # 🔥 INSTRUCCIONES MEJORADAS: Enfatizar el uso del contenido leído
+    # 🔥 INSTRUCCIONES MEJORADAS: Enfatizar el uso del contenido leído Y rutas relativas
     instrucciones_ai = (
         f"{schema['instructions']}\n\n"
-        f"🔥 REGLA CRÍTICA: Si en el contexto hay archivos leídos (sección '📂 ARCHIVOS LEÍDOS'),\n"
+        f"🔥 REGLA CRÍTICA 1: Si en el contexto hay archivos leídos (sección '📂 ARCHIVOS LEÍDOS'),\n"
         f"DEBES usar EXACTAMENTE ese contenido cuando crees o modifiques archivos relacionados.\n"
         f"NO inventes contenido nuevo si ya existe contenido leído relevante.\n\n"
+        f"🔥 REGLA CRÍTICA 2: Las rutas SIEMPRE son RELATIVAS al directorio actual del proyecto.\n"
+        f"NUNCA incluyas el nombre del proyecto en las rutas. Usa rutas directas como:\n"
+        f"  ✅ CORRECTO: 'carpeta/archivo.txt' o 'archivo.txt'\n"
+        f"  ❌ INCORRECTO: 'nombreProyecto/carpeta/archivo.txt'\n\n"
         f"Acciones permitidas: {', '.join(schema['actions_allowed'])}\n"
         f"Ejemplo acción individual:\n{json.dumps(schema['example_single_action'], indent=2)}\n"
         f"Ejemplo acciones múltiples:\n{json.dumps(schema['example_multiple_actions'], indent=2)}\n\n"
@@ -72,13 +76,12 @@ def enviar_a_ia(instruccion, contexto=""):
 
 def generar_estructura_proyecto(base_path: Path):
     """
-    Genera la estructura del proyecto en un formato de diccionario, 
-    excluyendo directorios y archivos comunes irrelevantes (venv, .git, etc.).
+    Genera la estructura del proyecto en formato diccionario,
+    SIN incluir el nombre del directorio raíz (solo su contenido).
+    Esto evita duplicación de rutas cuando la IA crea archivos.
     """
-    EXCLUIR_DIR = ['.git', '__pycache__', 'venv', 'node_modules', '.vscode', '.idea']
+    EXCLUIR_DIR = ['.git', '__pycache__', 'venv', 'node_modules', '.vscode', '.idea', 'ai_agent']
     EXCLUIR_ARCHIVOS = ['.DS_Store', 'project_structure.json', 'README.md', '.env', 'Pipfile.lock']
-
-    estructura = {}
     
     if not base_path.is_dir():
         return {"error": "Ruta base no es un directorio válido."}
@@ -86,20 +89,28 @@ def generar_estructura_proyecto(base_path: Path):
     def _recorrer_directorio(ruta_actual: Path):
         elementos = {}
         for item in ruta_actual.iterdir():
+            # Saltar directorios excluidos
             if item.is_dir() and item.name in EXCLUIR_DIR:
                 continue
+            # Saltar archivos excluidos
             if item.is_file() and item.name in EXCLUIR_ARCHIVOS:
                 continue
 
             if item.is_dir():
+                # Recursión para subdirectorios
                 elementos[item.name] = _recorrer_directorio(item)
             else:
+                # Marcar archivos
                 elementos[item.name] = "file" 
 
         return elementos
 
-    estructura[base_path.name] = _recorrer_directorio(base_path)
+    # 🔥 FIX: Devolver directamente el contenido SIN envolverlo en base_path.name
+    # Esto evita que la estructura tenga: {"proyectoDePrueba": {...}}
+    # Y en su lugar devuelve directamente: {...}
+    estructura = _recorrer_directorio(base_path)
 
+    # Guardar en archivo JSON
     output_path = base_path / "project_structure.json"
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(estructura, f, indent=2, ensure_ascii=False)
