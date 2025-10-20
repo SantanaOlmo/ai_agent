@@ -41,6 +41,19 @@ def main():
 
     estructura = generar_estructura_proyecto(BASE_DIR.parent)
     historial = f"Contexto inicial del proyecto (estructura de archivos):\n{json.dumps(estructura, indent=2)}\n"
+    
+    #------------------------------------------------------------------------------------------------------------
+    # Detectar ruta actual de ejecución
+    base_path = Path.cwd()
+    print("🔹 base_path detectado (proyecto actual):", base_path)
+
+    # Opcional: listar archivos de la raíz para ver que realmente está en el proyecto correcto
+    print("🔹 Archivos en la raíz del proyecto:", list(base_path.iterdir()))
+
+    # ... aquí seguiría la inicialización de tu agente, claves, etc.
+    instruccion = input("\n¿Qué quieres que haga la IA? (escribe 'salir' para terminar): ")
+    # ejecutar acciones etc.
+    #------------------------------------------------------------------------------------------------------------
 
     while True:
         instruccion = input("\n¿Qué quieres que haga la IA? (escribe 'salir' para terminar): ")
