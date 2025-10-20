@@ -22,20 +22,28 @@ def limpiar_respuesta(respuesta):
     return respuesta.strip()
 
 def cargar_ai_schema():
+    from pathlib import Path
+    import json
+
     schema_path = Path(__file__).parent / "config" / "ai_schema.json"
     try:
         with open(schema_path, "r", encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
+        # Solo para fallback, incluye type para no romper action_manager
         return {
             "instructions": "Responde SIEMPRE en JSON válido...",
             "actions_allowed": ["leer", "escribir", "crear", "borrar", "hablar"],
-            "example_single_action": {"action": "hablar", "mensaje": "Hola!"},
-            "example_multiple_actions": [
-                {"action": "leer", "ruta": "archivo.txt"},
-                {"action": "hablar", "mensaje": "Archivo leído"}
-            ]
+            "example_single_action": {"action": "crear", "ruta": "archivo.txt", "type": "file"},
+            "example_multiple_actions": {
+                "actions": [
+                    {"action": "crear", "ruta": "carpeta/", "type": "directory"},
+                    {"action": "crear", "ruta": "carpeta/archivo.py", "type": "file", "contenido": "print('Hola mundo')"},
+                    {"action": "hablar", "mensaje": "Estructura base creada."}
+                ]
+            }
         }
+
 
 def enviar_a_ia(instruccion, contexto=""):
     schema = cargar_ai_schema()

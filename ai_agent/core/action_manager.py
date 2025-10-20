@@ -12,8 +12,9 @@ def ejecutar_accion(respuesta_json, base_path=None):
     """
     resultado = {"status": "ok", "acciones": []}
 
+    # Usar la raíz del proyecto actual por defecto
     if base_path is None:
-        base_path = Path(__file__).resolve().parent.parent
+        base_path = Path.cwd()
 
     if not respuesta_json:
         print("⚠️ No se recibió respuesta de la IA.")
@@ -48,6 +49,11 @@ def ejecutar_accion(respuesta_json, base_path=None):
         if tipo in ["leer", "crear", "escribir", "borrar"]:
             for ruta in rutas:
                 ruta_final = (base_path / Path(ruta)).resolve()
+
+                # Inferir tipo automáticamente si no se indica
+                if tipo in ["crear", "escribir"] and not tipo_elemento:
+                    tipo_elemento = "file" if ruta_final.suffix else "directory"
+
                 try:
                     if tipo == "leer":
                         if ruta_final.exists():
@@ -59,9 +65,6 @@ def ejecutar_accion(respuesta_json, base_path=None):
                             raise FileNotFoundError(f"Archivo no encontrado: {ruta_final}")
 
                     elif tipo in ["crear", "escribir"]:
-                        if not tipo_elemento:
-                            raise ValueError(f"La acción '{tipo}' requiere 'type' ('file' o 'directory').")
-
                         ruta_final.parent.mkdir(parents=True, exist_ok=True)
 
                         if tipo_elemento == "directory":
