@@ -4,6 +4,7 @@ import google.generativeai as genai
 from pathlib import Path
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 MODEL_NAME = "gemini-2.5-flash"
@@ -25,7 +26,7 @@ def cargar_ai_schema():
     from pathlib import Path
     import json
 
-    schema_path = Path(__file__).parent / "config" / "ai_schema.json"
+    schema_path = Path.cwd() / "config" / "ai_schema.json"
     try:
         with open(schema_path, "r", encoding="utf-8") as f:
             return json.load(f)

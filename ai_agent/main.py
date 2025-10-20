@@ -10,7 +10,7 @@ from ai_agent.key_manager import pedir_api_key
 from ai_agent.core.updateREADME import push_readme_local_to_github
 
 load_dotenv()
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path.cwd()
 MODEL_NAME = "gemini-2.5-flash"
 
 def validar_api_key(api_key):

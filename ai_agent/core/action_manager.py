@@ -88,7 +88,7 @@ def ejecutar_accion(respuesta_json, base_path=None):
                             raise FileNotFoundError(f"Archivo no encontrado: {ruta_final}")
 
                     elif tipo in ["crear", "escribir"]:
-                        ruta_final.parent.mkdir(parents=True, exist_ok=True)
+                        ruta_final.parent.mkdir(s=True, exist_ok=True)
 
                         if tipo_elemento == "directory":
                             ruta_final.mkdir(parents=True, exist_ok=True)
