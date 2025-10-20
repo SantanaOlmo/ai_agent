@@ -66,7 +66,7 @@ def enviar_a_ia(instruccion, contexto=""):
 def generar_estructura_proyecto(base_path=None):
     from pathlib import Path
     if base_path is None:
-        base_path = Path(__file__).resolve().parent.parent
+        base_path = Path.cwd()
     estructura = {}
     for ruta in base_path.rglob("*"):
         partes = ruta.relative_to(base_path).parts

@@ -15,7 +15,7 @@ def ejecutar_accion(respuesta_json, base_path=None):
 
     # ✅ Usar la raíz del proyecto actual por defecto
     if base_path is None:
-        base_path = Path(__file__).resolve().parent.parent
+        base_path = Path.cwd()
         # Asegura que esté dentro del proyecto, no en site-packages
         if "site-packages" in str(base_path):
             base_path = Path.cwd()
