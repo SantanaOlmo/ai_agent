@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="mi_mcp_gemini",
+    name="ai_agent",
     version="1.0.0",
     packages=find_packages(),
     install_requires=[
@@ -11,7 +11,7 @@ setup(
         "PyGithub>=2.0.0"
     ],
     python_requires=">=3.10",
-    url="https://github.com/tu_usuario/mi_mcp_gemini",
+    url="https://github.com/SantanaOmo/ai_agent",
     author="Alberto",
     author_email="tu_email@example.com",
     description="MCP profesional con Google Gemini, gestión de múltiples API Keys cifradas y agente autónomo.",
@@ -24,7 +24,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "mi-mcp-gemini=ia_core.main:main",
+            "ai_agent=ia_core.main:main",
         ],
     },
 )
