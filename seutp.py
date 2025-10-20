@@ -11,7 +11,7 @@ setup(
         "PyGithub>=2.0.0"
     ],
     python_requires=">=3.10",
-    url="https://github.com/SantanaOmo/ai_agent",
+    url="https://github.com/SantanaOlmo/ai_agent",
     author="Alberto",
     author_email="tu_email@example.com",
     description="MCP profesional con Google Gemini, gestión de múltiples API Keys cifradas y agente autónomo.",
@@ -24,7 +24,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "ai_agent=ia_core.main:main",
+            "ai_agent=ai_agent.main:main",
         ],
     },
 )
