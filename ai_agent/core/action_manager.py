@@ -5,28 +5,33 @@ def ejecutar_accion(respuesta_json, base_path=None):
     """
     Ejecuta las acciones indicadas por la IA.
     Soporta:
-      - Acciones simples o listas múltiples.
-      - Rutas como str o lista de strings.
+      - Acciones simples o múltiples.
+      - Rutas como str o lista.
       - Crear, escribir, leer, borrar y hablar.
-    Usa el campo 'type' ('file' o 'directory') para las acciones de creación.
+    Usa 'type' ('file' o 'directory') o lo infiere automáticamente.
     """
+
     resultado = {"status": "ok", "acciones": []}
 
-    # Usar la raíz del proyecto actual por defecto
+    # ✅ Usar la raíz del proyecto actual por defecto
     if base_path is None:
-        base_path = Path.cwd()
+        base_path = Path(__file__).resolve().parent.parent
+        # Asegura que esté dentro del proyecto, no en site-packages
+        if "site-packages" in str(base_path):
+            base_path = Path.cwd()
 
     if not respuesta_json:
         print("⚠️ No se recibió respuesta de la IA.")
         return {"status": "error", "acciones": []}
 
+    # ✅ Parsear JSON correctamente
     try:
         data = json.loads(respuesta_json) if isinstance(respuesta_json, str) else respuesta_json
     except json.JSONDecodeError:
         print(f"💬 IA dice (texto plano): {respuesta_json}")
         return {"status": "ok", "acciones": [{"status": "ok", "mensaje": respuesta_json, "contenido": {}}]}
 
-    # Soporta formato con "actions", lista directa o acción única
+    # ✅ Acepta "actions", lista directa o acción única
     if isinstance(data, dict) and "actions" in data:
         acciones = data["actions"]
     elif isinstance(data, list):
@@ -37,6 +42,17 @@ def ejecutar_accion(respuesta_json, base_path=None):
     for accion in acciones:
         accion_res = {"status": "ok", "mensaje": "", "contenido": {}}
         tipo = accion.get("action")
+
+        # ✅ Traducción automática inglés → español
+        traducciones = {
+            "read": "leer",
+            "write": "escribir",
+            "create": "crear",
+            "delete": "borrar",
+            "speak": "hablar"
+        }
+        tipo = traducciones.get(tipo, tipo)
+
         rutas = accion.get("ruta")
         contenido = accion.get("contenido", "")
         tipo_elemento = accion.get("type")  # 'file' o 'directory'
@@ -48,9 +64,16 @@ def ejecutar_accion(respuesta_json, base_path=None):
 
         if tipo in ["leer", "crear", "escribir", "borrar"]:
             for ruta in rutas:
-                ruta_final = (base_path / Path(ruta)).resolve()
+                ruta_final = (base_path / Path(ruta.strip("/\\"))).resolve()
 
-                # Inferir tipo automáticamente si no se indica
+                # ✅ Evitar escribir fuera del proyecto
+                if not str(ruta_final).startswith(str(base_path)):
+                    accion_res["status"] = "error"
+                    accion_res["mensaje"] = f"Ruta fuera del proyecto: {ruta_final}"
+                    resultado["acciones"].append(accion_res)
+                    continue
+
+                # ✅ Inferir tipo si no se indica
                 if tipo in ["crear", "escribir"] and not tipo_elemento:
                     tipo_elemento = "file" if ruta_final.suffix else "directory"
 
