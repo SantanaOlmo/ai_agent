@@ -2,36 +2,23 @@ import json
 from pathlib import Path
 
 def ejecutar_accion(respuesta_json, base_path=None):
-    """
-    Ejecuta las acciones indicadas por la IA.
-    Soporta:
-      - Acciones simples o múltiples.
-      - Rutas como str o lista.
-      - Crear, escribir, leer, borrar y hablar.
-    Usa 'type' ('file' o 'directory') o lo infiere automáticamente.
-    """
+    """Ejecuta las acciones indicadas por la IA (crear, escribir, leer, borrar)."""
 
     resultado = {"status": "ok", "acciones": []}
 
-    # ✅ Usar la raíz del proyecto actual por defecto
+    # 🔑 Asegurar que base_path es la ruta correcta del proyecto.
     if base_path is None:
         base_path = Path.cwd()
-        # Asegura que esté dentro del proyecto, no en site-packages
-        if "site-packages" in str(base_path):
-            base_path = Path.cwd()
 
     if not respuesta_json:
-        print("⚠️ No se recibió respuesta de la IA.")
         return {"status": "error", "acciones": []}
 
-    # ✅ Parsear JSON correctamente
+    # Parsear JSON y normalizar a una lista de acciones
     try:
         data = json.loads(respuesta_json) if isinstance(respuesta_json, str) else respuesta_json
     except json.JSONDecodeError:
-        print(f"💬 IA dice (texto plano): {respuesta_json}")
         return {"status": "ok", "acciones": [{"status": "ok", "mensaje": respuesta_json, "contenido": {}}]}
 
-    # ✅ Acepta "actions", lista directa o acción única
     if isinstance(data, dict) and "actions" in data:
         acciones = data["actions"]
     elif isinstance(data, list):
@@ -39,23 +26,20 @@ def ejecutar_accion(respuesta_json, base_path=None):
     else:
         acciones = [data]
 
+    # Mapeo de acciones de inglés a español
+    traducciones = {
+        "read": "leer", "write": "escribir", "create": "crear",
+        "delete": "borrar", "speak": "hablar"
+    }
+
     for accion in acciones:
         accion_res = {"status": "ok", "mensaje": "", "contenido": {}}
         tipo = accion.get("action")
-
-        # ✅ Traducción automática inglés → español
-        traducciones = {
-            "read": "leer",
-            "write": "escribir",
-            "create": "crear",
-            "delete": "borrar",
-            "speak": "hablar"
-        }
         tipo = traducciones.get(tipo, tipo)
 
         rutas = accion.get("ruta")
         contenido = accion.get("contenido", "")
-        tipo_elemento = accion.get("type")  # 'file' o 'directory'
+        tipo_elemento = accion.get("type") 
 
         if isinstance(rutas, str):
             rutas = [rutas]
@@ -64,16 +48,16 @@ def ejecutar_accion(respuesta_json, base_path=None):
 
         if tipo in ["leer", "crear", "escribir", "borrar"]:
             for ruta in rutas:
-                ruta_final = (base_path / Path(ruta.strip("/\\"))).resolve()
+                # 🟢 Crear la ruta absoluta combinando base_path con la ruta relativa
+                ruta_final = (Path(base_path) / Path(ruta.strip("/\\"))).resolve()
 
-                # ✅ Evitar escribir fuera del proyecto
+                # 🛡️ Evitar escribir fuera del proyecto
                 if not str(ruta_final).startswith(str(base_path)):
                     accion_res["status"] = "error"
                     accion_res["mensaje"] = f"Ruta fuera del proyecto: {ruta_final}"
                     resultado["acciones"].append(accion_res)
                     continue
 
-                # ✅ Inferir tipo si no se indica
                 if tipo in ["crear", "escribir"] and not tipo_elemento:
                     tipo_elemento = "file" if ruta_final.suffix else "directory"
 
@@ -88,7 +72,8 @@ def ejecutar_accion(respuesta_json, base_path=None):
                             raise FileNotFoundError(f"Archivo no encontrado: {ruta_final}")
 
                     elif tipo in ["crear", "escribir"]:
-                        ruta_final.parent.mkdir(s=True, exist_ok=True)
+                        # Crear directorios padres si son necesarios
+                        ruta_final.parent.mkdir(parents=True, exist_ok=True)
 
                         if tipo_elemento == "directory":
                             ruta_final.mkdir(parents=True, exist_ok=True)
@@ -98,7 +83,7 @@ def ejecutar_accion(respuesta_json, base_path=None):
                             with open(ruta_final, "w", encoding="utf-8") as f:
                                 f.write(contenido or "")
                             accion_res["mensaje"] = f"📝 Archivo {'actualizado' if tipo=='escribir' else 'creado'}: {ruta_final}"
-
+                        
                         else:
                             raise ValueError(f"Tipo desconocido: {tipo_elemento}")
 
@@ -107,10 +92,9 @@ def ejecutar_accion(respuesta_json, base_path=None):
                     elif tipo == "borrar":
                         if ruta_final.exists():
                             if ruta_final.is_dir():
-                                for sub in ruta_final.rglob("*"):
-                                    if sub.is_file():
-                                        sub.unlink()
-                                ruta_final.rmdir()
+                                # Lógica simple de borrado de carpeta
+                                import shutil
+                                shutil.rmtree(ruta_final)
                                 accion_res["mensaje"] = f"🗑️ Carpeta borrada: {ruta_final}"
                             else:
                                 ruta_final.unlink()
