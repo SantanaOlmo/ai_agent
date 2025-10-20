@@ -5,9 +5,9 @@ import google.generativeai as genai
 
 from .utils import enviar_a_ia, generar_estructura_proyecto
 from .core.action_manager import ejecutar_accion
-from .readme_manager import actualizar_readme
+from core.readme_manager import actualizar_readme
 from .key_manager import pedir_api_key
-from .updateREADME import push_readme_local_to_github
+from core.updateREADME import push_readme_local_to_github
 
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
