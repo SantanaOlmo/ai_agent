@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.env
+.mcp_gemini_keys.enc
+.mcp_gemini_secret.key
