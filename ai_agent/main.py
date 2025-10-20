@@ -1,3 +1,4 @@
+#ai_agent/main.py
 import json
 from pathlib import Path
 from dotenv import load_dotenv
@@ -8,7 +9,6 @@ from ai_agent.core.action_manager import ejecutar_accion
 from ai_agent.core.readme_manager import actualizar_readme
 from ai_agent.key_manager import pedir_api_key
 from ai_agent.core.updateREADME import push_readme_local_to_github
-import shutil
 
 load_dotenv()
 BASE_DIR = Path.cwd()
@@ -40,13 +40,22 @@ def main():
     if not api_key:
         return
 
-    # Usamos BASE_DIR como la ruta base del proyecto.
     base_path_proyecto = BASE_DIR
-    
     estructura = generar_estructura_proyecto(base_path_proyecto) 
-    historial = f"Contexto inicial del proyecto (estructura de archivos):\n{json.dumps(estructura, indent=2)}\n"
     
-    # Mostrar ruta detectada
+    # 🔥 HISTORIAL MEJORADO: Ahora incluirá el contenido de archivos leídos
+    historial = (
+        f"Contexto inicial del proyecto (estructura de archivos):\n"
+        f"{json.dumps(estructura, indent=2)}\n\n"
+        "Instrucciones importantes:\n"
+        "- Cuando leas un archivo, DEBES usar su contenido en las siguientes acciones.\n"
+        "- Si te pido crear algo basado en un archivo leído, usa EXACTAMENTE el contenido leído.\n"
+        "- Respeta el formato y estructura del contenido original.\n\n"
+    )
+    
+    # 📁 Memoria de archivos leídos (clave: ruta, valor: contenido)
+    memoria_archivos = {}
+    
     print("🔹 base_path detectado (proyecto actual):", base_path_proyecto)
     print("🔹 Archivos en la raíz del proyecto:", list(base_path_proyecto.iterdir()))
 
@@ -58,36 +67,59 @@ def main():
             historial += f"\nUsuario: {resumen}\n"
             break
             
-        # Manejar entrada vacía (solo pulsa Enter)
         if not instruccion.strip():
             print("⚠️ Introduce una instrucción o escribe 'salir'.")
             continue
-            
-        # Procesar el prompt
-        historial += f"\nUsuario: {instruccion}\n"
-        respuesta_ia = enviar_a_ia(instruccion, contexto=historial)
         
-        print("\n🟢 RESPUESTA CRUDA DE LA IA:\n", respuesta_ia)
+        # 🔥 PASO 1: Agregar instrucción al historial
+        historial += f"\nUsuario: {instruccion}\n"
+        
+        # 🔥 PASO 2: Si hay archivos en memoria, inyectarlos en el contexto
+        contexto_con_archivos = historial
+        if memoria_archivos:
+            contexto_con_archivos += "\n📂 ARCHIVOS LEÍDOS RECIENTEMENTE (USA ESTE CONTENIDO):\n"
+            for ruta, contenido in memoria_archivos.items():
+                # Limitar contenido si es muy largo (opcional)
+                contenido_mostrar = contenido[:5000] + "..." if len(contenido) > 5000 else contenido
+                contexto_con_archivos += f"\n--- {ruta} ---\n{contenido_mostrar}\n"
+        
+        # Enviar a la IA con el contexto enriquecido
+        respuesta_ia = enviar_a_ia(instruccion, contexto=contexto_con_archivos)
+        
+        print("\n🟢 RESPUESTA DE LA IA:\n", respuesta_ia)
 
-        # Ejecutar acciones, pasando la ruta base correcta del proyecto
+        # 🔥 PASO 3: Ejecutar acciones
         resultado = ejecutar_accion(respuesta_ia, base_path=base_path_proyecto)
         print("\n🔹 Resumen de acciones ejecutadas:")
         print(json.dumps(resultado, indent=2, ensure_ascii=False))
 
-        # Actualizar README
+        # 🔥 PASO 4: Extraer contenidos leídos y agregarlos a la MEMORIA
         contenidos_leidos = {}
         for accion in resultado.get("acciones", []):
             if accion.get("status") == "ok" and "contenido" in accion:
                 contenidos_leidos.update(accion["contenido"])
-
+        
+        # Actualizar memoria de archivos leídos
         if contenidos_leidos:
+            memoria_archivos.update(contenidos_leidos)
+            print(f"\n💾 {len(contenidos_leidos)} archivo(s) agregado(s) a la memoria de la IA")
+            
+            # 🔥 AGREGAR contenido al historial permanentemente
+            historial += "\n📂 Archivos leídos (contenido disponible para uso):\n"
+            for ruta, contenido in contenidos_leidos.items():
+                # Guardar solo un resumen en el historial para no saturarlo
+                resumen_contenido = contenido[:500] + "..." if len(contenido) > 500 else contenido
+                historial += f"\n--- {ruta} ---\n{resumen_contenido}\n"
+            
+            # Actualizar README
             actualizar_readme(contenidos_leidos, base_path=BASE_DIR)
 
-        # Actualizar historial si hubo cambios en la estructura
+        # Actualizar estructura si hubo cambios
         if resultado.get("status") == "ok":
             estructura = generar_estructura_proyecto(base_path_proyecto)
-            historial += f"\n[Actualización de estructura]:\n{json.dumps(estructura, indent=2)}\n"
+            historial += f"\n[Estructura actualizada]\n{json.dumps(estructura, indent=2)}\n"
 
+        # Guardar respuesta de IA en historial
         historial += f"IA: {respuesta_ia}\n"
 
     # Preguntar si subir README a GitHub
