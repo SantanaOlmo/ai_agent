@@ -3,11 +3,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-from .utils import enviar_a_ia, generar_estructura_proyecto
-from .core.action_manager import ejecutar_accion
-from core.readme_manager import actualizar_readme
-from .key_manager import pedir_api_key
-from core.updateREADME import push_readme_local_to_github
+from ai_agent.utils import enviar_a_ia, generar_estructura_proyecto
+from ai_agent.core.action_manager import ejecutar_accion
+from ai_agent.core.readme_manager import actualizar_readme
+from ai_agent.key_manager import pedir_api_key
+from ai_agent.core.updateREADME import push_readme_local_to_github
 
 load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
