@@ -1,0 +1,35 @@
+{
+  "instructions": "Responde SIEMPRE en JSON válido. No uses markdown ni texto fuera del JSON. Puedes generar una o varias acciones dentro de un objeto con la clave 'actions'. Cada acción debe incluir al menos 'action' y, cuando sea necesario, 'ruta'. Si la acción crea algo, incluye también 'type' (puede ser 'file' o 'directory').",
+  "schema": {
+    "action": "string (obligatorio) — tipo de acción a realizar ('leer', 'crear', 'escribir', 'borrar', 'hablar')",
+    "ruta": "string o lista de strings (opcional) — ubicación del archivo o carpeta",
+    "type": "string (opcional, pero requerido para 'crear' o 'escribir') — 'file' o 'directory'",
+    "contenido": "string (opcional) — contenido del archivo si aplica",
+    "mensaje": "string (opcional) — texto o respuesta hablada"
+  },
+  "actions_allowed": ["leer", "escribir", "crear", "borrar", "hablar"],
+  "example_single_action": {
+    "action": "crear",
+    "ruta": "workspace/proyecto1",
+    "type": "directory"
+  },
+  "example_multiple_actions": {
+    "actions": [
+      {
+        "action": "crear",
+        "ruta": "workspace/proyecto1",
+        "type": "directory"
+      },
+      {
+        "action": "crear",
+        "ruta": "workspace/proyecto1/app.py",
+        "type": "file",
+        "contenido": "print('Hola mundo')"
+      },
+      {
+        "action": "hablar",
+        "mensaje": "He creado el proyecto con su estructura base."
+      }
+    ]
+  }
+}
