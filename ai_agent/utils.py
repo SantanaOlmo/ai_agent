@@ -64,21 +64,48 @@ def enviar_a_ia(instruccion, contexto=""):
         print("❌ Error al comunicarse con Gemini:", e)
         return None
 
-def generar_estructura_proyecto(base_path=None):
-    from pathlib import Path
-    if base_path is None:
-        base_path = Path.cwd()
+def generar_estructura_proyecto(base_path: Path):
+    """
+    Genera la estructura del proyecto en un formato de diccionario, 
+    excluyendo directorios y archivos comunes irrelevantes (venv, .git, etc.).
+    """
+    # 🚫 Lista de directorios y archivos a ignorar (añade más según necesites)
+    EXCLUIR_DIR = ['.git', '__pycache__', 'venv', 'node_modules', '.vscode', '.idea']
+    EXCLUIR_ARCHIVOS = ['.DS_Store', 'project_structure.json', 'README.md', '.env', 'Pipfile.lock']
+
     estructura = {}
-    for ruta in base_path.rglob("*"):
-        partes = ruta.relative_to(base_path).parts
-        actual = estructura
-        for p in partes[:-1]:
-            actual = actual.setdefault(p, {})
-        if ruta.is_file():
-            actual[partes[-1]] = {"type": "file"}
-        elif ruta.is_dir():
-            actual[partes[-1]] = {"type": "directory"}
-    with open(base_path / "project_structure.json", "w", encoding="utf-8") as f:
+    
+    # Asegurarse de que el path base existe
+    if not base_path.is_dir():
+        return {"error": "Ruta base no es un directorio válido."}
+
+    # Función recursiva para recorrer la estructura
+    def _recorrer_directorio(ruta_actual: Path):
+        elementos = {}
+        for item in ruta_actual.iterdir():
+            # Saltar si es un directorio de exclusión
+            if item.is_dir() and item.name in EXCLUIR_DIR:
+                continue
+            
+            # Saltar si es un archivo de exclusión
+            if item.is_file() and item.name in EXCLUIR_ARCHIVOS:
+                continue
+
+            if item.is_dir():
+                # Llamada recursiva para subdirectorios
+                elementos[item.name] = _recorrer_directorio(item)
+            else:
+                # Archivos: guardar el tamaño o un marcador
+                elementos[item.name] = "file" 
+
+        return elementos
+
+    # La estructura se inicia con el nombre del directorio base
+    estructura[base_path.name] = _recorrer_directorio(base_path)
+
+    # Opcional: Escribir el archivo project_structure.json para debug o contexto
+    output_path = base_path / "project_structure.json"
+    with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(estructura, f, indent=2, ensure_ascii=False)
-    print("📦 Estructura del proyecto actualizada en project_structure.json")
+    
     return estructura

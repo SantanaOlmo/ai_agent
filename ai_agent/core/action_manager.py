@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+import shutil # Necesario para la eliminación recursiva de carpetas
 
 def ejecutar_accion(respuesta_json, base_path=None):
     """Ejecuta las acciones indicadas por la IA (crear, escribir, leer, borrar)."""
@@ -48,10 +49,10 @@ def ejecutar_accion(respuesta_json, base_path=None):
 
         if tipo in ["leer", "crear", "escribir", "borrar"]:
             for ruta in rutas:
-                # 🟢 Crear la ruta absoluta combinando base_path con la ruta relativa
+                # Crear la ruta absoluta combinando base_path con la ruta relativa
                 ruta_final = (Path(base_path) / Path(ruta.strip("/\\"))).resolve()
 
-                # 🛡️ Evitar escribir fuera del proyecto
+                # Evitar escribir fuera del proyecto
                 if not str(ruta_final).startswith(str(base_path)):
                     accion_res["status"] = "error"
                     accion_res["mensaje"] = f"Ruta fuera del proyecto: {ruta_final}"
@@ -78,22 +79,23 @@ def ejecutar_accion(respuesta_json, base_path=None):
                         if tipo_elemento == "directory":
                             ruta_final.mkdir(parents=True, exist_ok=True)
                             accion_res["mensaje"] = f"📁 Carpeta creada: {ruta_final}"
+                            # 🟢 Muestra la ruta de forma clara
+                            print(f"✅ Carpeta creada en: {ruta_final}")
 
                         elif tipo_elemento == "file":
                             with open(ruta_final, "w", encoding="utf-8") as f:
                                 f.write(contenido or "")
                             accion_res["mensaje"] = f"📝 Archivo {'actualizado' if tipo=='escribir' else 'creado'}: {ruta_final}"
+                            # 🟢 Muestra la ruta de forma clara
+                            print(f"✅ Archivo creado/actualizado en: {ruta_final}")
                         
                         else:
                             raise ValueError(f"Tipo desconocido: {tipo_elemento}")
 
-                        print(accion_res["mensaje"])
-
                     elif tipo == "borrar":
                         if ruta_final.exists():
                             if ruta_final.is_dir():
-                                # Lógica simple de borrado de carpeta
-                                import shutil
+                                # Lógica para borrar carpeta recursivamente
                                 shutil.rmtree(ruta_final)
                                 accion_res["mensaje"] = f"🗑️ Carpeta borrada: {ruta_final}"
                             else:

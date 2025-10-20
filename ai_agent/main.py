@@ -40,7 +40,7 @@ def main():
     if not api_key:
         return
 
-    # 🟢 CORRECCIÓN DE RUTA: Usamos BASE_DIR (directorio actual) como base del proyecto.
+    # Usamos BASE_DIR como la ruta base del proyecto.
     base_path_proyecto = BASE_DIR
     
     estructura = generar_estructura_proyecto(base_path_proyecto) 
@@ -69,7 +69,7 @@ def main():
         
         print("\n🟢 RESPUESTA CRUDA DE LA IA:\n", respuesta_ia)
 
-        # 4. Ejecutar acciones, pasando la ruta base correcta del proyecto
+        # Ejecutar acciones, pasando la ruta base correcta del proyecto
         resultado = ejecutar_accion(respuesta_ia, base_path=base_path_proyecto)
         print("\n🔹 Resumen de acciones ejecutadas:")
         print(json.dumps(resultado, indent=2, ensure_ascii=False))
