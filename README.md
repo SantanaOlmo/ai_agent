@@ -12,6 +12,24 @@ MCP profesional con **Google Gemini** y agente autónomo.
 
 ## Instalación
 
+Se recomienda crear un entorno virtual antes de instalar el proyecto:
+
+```bash
+# Crear entorno virtual
+python -m venv venv
+
+# Activar entorno virtual
+# Windows
+venv\Scripts\activate
+# Linux / macOS
+source venv/bin/activate
+
+# Actualizar pip y setuptools
+python -m pip install --upgrade pip setuptools
+```
+
+Luego instala el proyecto directamente desde GitHub:
+
 ```bash
 pip install git+https://github.com/SantanaOlmo/ai_agent.git
 ```
